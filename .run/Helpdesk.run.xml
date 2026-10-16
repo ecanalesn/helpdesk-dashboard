@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <!-- Tipo "Application": funciona en IntelliJ IDEA Community (la configuración "Spring Boot" es de Ultimate) -->
+  <configuration default="false" name="Helpdesk" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="io.github.ecanalesn.helpdesk.HelpdeskApplication" />
+    <module name="helpdesk-dashboard" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

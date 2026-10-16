@@ -1,0 +1,14 @@
+# Normaliza los finales de línea en el repositorio, sea cual sea el sistema del desarrollador
+* text=auto
+
+# Los scripts de shell necesitan LF (con CRLF fallan en Linux, macOS y Git Bash)
+mvnw text eol=lf
+*.sh text eol=lf
+
+# Los scripts de Windows necesitan CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binarios
+*.jar binary
+*.xlsx binary

@@ -1,0 +1,34 @@
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ IDEA (el proyecto se importa desde pom.xml; las run configurations compartidas están en .run/)
+.idea/
+*.iml
+out/
+
+# VS Code: se versionan solo los ficheros compartidos del equipo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Eclipse / extensión Java de VS Code
+.classpath
+.project
+.settings/
+.factorypath
+bin/
+
+# Spring Boot DevTools / logs
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Datos locales y secretos
+*.mv.db
+*.trace.db
+.env
+application-local.properties

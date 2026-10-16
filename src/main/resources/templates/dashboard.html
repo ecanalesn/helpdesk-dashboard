@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Panel')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('dashboard')}"></nav>
+
+<main class="container pb-5" th:with="s=${metrics.summary()}">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-0">Panel de soporte</h1>
+            <p class="text-body-secondary mb-0">Indicadores de <span th:text="${@fmt.month(month)}">octubre 2026</span></p>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/(month=${previousMonth})}" aria-label="Mes anterior">&larr;</a>
+            <form class="d-flex gap-2" th:action="@{/}" method="get">
+                <label class="visually-hidden" for="month">Mes</label>
+                <input class="form-control form-control-sm" type="month" id="month" name="month" th:value="${month}">
+                <button class="btn btn-outline-secondary btn-sm" type="submit">Ver</button>
+            </form>
+            <a class="btn btn-outline-secondary btn-sm" th:if="${nextMonth != null}"
+               th:href="@{/(month=${nextMonth})}" aria-label="Mes siguiente">&rarr;</a>
+            <a class="btn btn-success btn-sm" th:href="@{/reports/monthly.csv(month=${month})}">Informe mensual (CSV)</a>
+        </div>
+    </div>
+
+    <!-- Indicadores principales: el número es el gráfico -->
+    <section class="row g-3 mb-4" aria-label="Indicadores principales">
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="kpi-label">Creados / resueltos</div>
+                <div class="kpi-value"><span th:text="${s.created()}">0</span> / <span th:text="${s.resolved()}">0</span></div>
+                <div class="kpi-note">en el mes</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="kpi-label">Pendientes</div>
+                <div class="kpi-value" th:text="${s.backlog()}">0</div>
+                <div class="kpi-note">
+                    <span th:text="${s.open()}">0</span> abiertos · <span th:text="${s.inProgress()}">0</span> en curso
+                    <span th:if="${s.overdueBacklog() > 0}" class="text-danger-emphasis d-block">
+                        ⚠ <span th:text="${s.overdueBacklog()}">0</span> fuera de SLA
+                    </span>
+                </div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="kpi-label">Primera respuesta</div>
+                <div class="kpi-value" th:text="${@fmt.hours(s.avgResponseHours())}">—</div>
+                <div class="kpi-note">media · mediana <span th:text="${@fmt.hours(s.medianResponseHours())}">—</span><br>
+                    SLA cumplido: <strong th:text="${@fmt.percent(s.responseSlaPct())}">—</strong></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100"><div class="card-body">
+                <div class="kpi-label">Resolución</div>
+                <div class="kpi-value" th:text="${@fmt.hours(s.avgResolutionHours())}">—</div>
+                <div class="kpi-note">media · mediana <span th:text="${@fmt.hours(s.medianResolutionHours())}">—</span><br>
+                    SLA cumplido: <strong th:text="${@fmt.percent(s.resolutionSlaPct())}">—</strong></div>
+            </div></div>
+        </div>
+    </section>
+
+    <!-- Gráficas: los datos se piden a la API REST (/api/metrics) -->
+    <section class="row g-3 mb-4 viz-root" id="charts" th:attr="data-month=${month}">
+        <div class="col-lg-8">
+            <div class="card h-100"><div class="card-body">
+                <h2 class="h6">Tickets creados y resueltos por día</h2>
+                <div class="chart-box"><canvas id="dailyChart" role="img"
+                        aria-label="Tickets creados y resueltos por día del mes"></canvas></div>
+            </div></div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100"><div class="card-body">
+                <h2 class="h6">Tickets creados por área</h2>
+                <div class="chart-box"><canvas id="categoryChart" role="img"
+                        aria-label="Tickets creados por área"></canvas></div>
+            </div></div>
+        </div>
+        <div class="col-12">
+            <div class="card"><div class="card-body">
+                <h2 class="h6">Cumplimiento de SLA por prioridad (%)</h2>
+                <div class="chart-box chart-box-sm"><canvas id="slaChart" role="img"
+                        aria-label="Porcentaje de cumplimiento de SLA de respuesta y de resolución por prioridad"></canvas></div>
+            </div></div>
+        </div>
+    </section>
+
+    <!-- Tabla con las cifras: alternativa accesible a la gráfica de SLA y detalle para el informe -->
+    <section class="card mb-4">
+        <div class="card-body">
+            <h2 class="h6">Tiempos por prioridad</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 numeric">
+                    <thead>
+                    <tr>
+                        <th scope="col">Prioridad</th>
+                        <th scope="col">Creados</th>
+                        <th scope="col">Resueltos</th>
+                        <th scope="col">Respuesta media</th>
+                        <th scope="col">Objetivo</th>
+                        <th scope="col">SLA respuesta</th>
+                        <th scope="col">Resolución media</th>
+                        <th scope="col">Objetivo</th>
+                        <th scope="col">SLA resolución</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${metrics.byPriority()}">
+                        <td><span th:replace="~{fragments :: priority(${p.priority()})}"></span></td>
+                        <td th:text="${p.created()}">0</td>
+                        <td th:text="${p.resolved()}">0</td>
+                        <td th:text="${@fmt.hours(p.avgResponseHours())}">—</td>
+                        <td class="text-body-secondary" th:text="${@fmt.hours(p.responseTargetHours())}">—</td>
+                        <td th:text="${@fmt.percent(p.responseSlaPct())}">—</td>
+                        <td th:text="${@fmt.hours(p.avgResolutionHours())}">—</td>
+                        <td class="text-body-secondary" th:text="${@fmt.hours(p.resolutionTargetHours())}">—</td>
+                        <td th:text="${@fmt.percent(p.resolutionSlaPct())}">—</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-body">
+            <h2 class="h6">Tickets pendientes más antiguos</h2>
+            <p th:if="${metrics.oldestOpen().isEmpty()}" class="text-body-secondary mb-0">No hay tickets pendientes.</p>
+            <div class="table-responsive" th:unless="${metrics.oldestOpen().isEmpty()}">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Título</th>
+                        <th scope="col">Prioridad</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Creado</th>
+                        <th scope="col">Antigüedad</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="t : ${metrics.oldestOpen()}">
+                        <td><a th:href="@{/tickets/{id}(id=${t.id()})}" th:text="${t.id()}">1</a></td>
+                        <td th:text="${t.title()}">Título</td>
+                        <td><span th:replace="~{fragments :: priority(${t.priority()})}"></span></td>
+                        <td><span th:replace="~{fragments :: status(${t.status()})}"></span></td>
+                        <td th:text="${@fmt.dateTime(t.createdAt())}">01/10/2026 10:00</td>
+                        <td>
+                            <span th:text="${@fmt.durationFromHours(t.ageHours())}">10 h</span>
+                            <span th:if="${t.overdue()}" class="badge text-bg-danger ms-1">⚠ Fuera de SLA</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
+
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+<script th:src="@{/webjars/chart.js/dist/chart.umd.min.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

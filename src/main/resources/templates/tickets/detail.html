@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Ticket #' + ${ticket.id})}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('tickets')}"></nav>
+
+<main class="container pb-5" th:with="t=${ticket}">
+    <a class="small" th:href="@{/tickets}">&larr; Volver al listado</a>
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-2 mb-3">
+        <h1 class="h3 mb-0">#<span th:text="${t.id}">1</span> · <span th:text="${t.title}">Título</span></h1>
+        <span th:replace="~{fragments :: priority(${t.priority})}"></span>
+        <span th:replace="~{fragments :: status(${t.status})}"></span>
+    </div>
+
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h6">Descripción</h2>
+                    <p class="ticket-description mb-0" th:text="${#strings.isEmpty(t.description)} ? 'Sin descripción.' : ${t.description}">Texto</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h6">Acciones</h2>
+                    <form class="row g-2 align-items-end mb-2" th:if="${t.canStart()}"
+                          th:action="@{/tickets/{id}/start(id=${t.id})}" method="post">
+                        <div class="col-sm-7">
+                            <label class="form-label small" for="assignee">Técnico que lo atiende</label>
+                            <input class="form-control" id="assignee" name="assignee" maxlength="80" required>
+                        </div>
+                        <div class="col-sm-5 d-grid">
+                            <button class="btn btn-info" type="submit">Empezar (pasar a en curso)</button>
+                        </div>
+                    </form>
+                    <form class="d-inline" th:if="${t.canResolve()}" th:action="@{/tickets/{id}/resolve(id=${t.id})}" method="post">
+                        <button class="btn btn-success" type="submit">Marcar como resuelto</button>
+                    </form>
+                    <form class="d-inline" th:if="${t.canReopen()}" th:action="@{/tickets/{id}/reopen(id=${t.id})}" method="post">
+                        <button class="btn btn-outline-warning" type="submit">Reabrir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5">Área</dt>
+                        <dd class="col-7" th:text="${t.category.label}">IDE</dd>
+                        <dt class="col-5">Solicitante</dt>
+                        <dd class="col-7" th:text="${t.requester}">Ana</dd>
+                        <dt class="col-5">Técnico</dt>
+                        <dd class="col-7" th:text="${t.assignee} ?: '—'">—</dd>
+                        <dt class="col-5">Creado</dt>
+                        <dd class="col-7" th:text="${@fmt.dateTime(t.createdAt)}">—</dd>
+                        <dt class="col-5">1.ª respuesta</dt>
+                        <dd class="col-7">
+                            <span th:text="${@fmt.dateTime(t.firstResponseAt)}">—</span>
+                            <span class="d-block text-body-secondary" th:if="${t.firstResponseAt != null}"
+                                  th:text="'tras ' + ${@fmt.duration(t.responseTime())}">tras 1 h</span>
+                        </dd>
+                        <dt class="col-5">Resuelto</dt>
+                        <dd class="col-7">
+                            <span th:text="${@fmt.dateTime(t.resolvedAt)}">—</span>
+                            <span class="d-block text-body-secondary" th:if="${t.resolvedAt != null}"
+                                  th:text="'tras ' + ${@fmt.duration(t.resolutionTime())}">tras 2 h</span>
+                        </dd>
+                    </dl>
+                    <hr>
+                    <h2 class="h6">SLA</h2>
+                    <dl class="row mb-0 small">
+                        <dt class="col-5">Respuesta</dt>
+                        <dd class="col-7">
+                            antes del <span th:text="${@fmt.dateTime(t.responseDeadline())}">—</span>
+                            <span th:if="${@fmt.responseSlaMet(t)}" class="badge text-bg-success">✓ En plazo</span>
+                            <span th:unless="${@fmt.responseSlaMet(t)}" class="badge text-bg-danger">⚠ Fuera de plazo</span>
+                        </dd>
+                        <dt class="col-5">Resolución</dt>
+                        <dd class="col-7">
+                            antes del <span th:text="${@fmt.dateTime(t.resolutionDeadline())}">—</span>
+                            <span th:if="${@fmt.resolutionSlaMet(t)}" class="badge text-bg-success">✓ En plazo</span>
+                            <span th:unless="${@fmt.resolutionSlaMet(t)}" class="badge text-bg-danger">⚠ Fuera de plazo</span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

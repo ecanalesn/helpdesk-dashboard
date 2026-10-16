@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Tickets')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('tickets')}"></nav>
+
+<main class="container pb-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h3 mb-0">Tickets</h1>
+        <a class="btn btn-primary" th:href="@{/tickets/new}">Nuevo ticket</a>
+    </div>
+
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <form class="row g-2 align-items-end mb-3" th:action="@{/tickets}" method="get">
+        <div class="col-sm-4">
+            <label class="form-label small" for="q">Buscar</label>
+            <input class="form-control" type="search" id="q" name="q" th:value="${q}" placeholder="Título o solicitante">
+        </div>
+        <div class="col-6 col-sm-3">
+            <label class="form-label small" for="status">Estado</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">Todos</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}" th:selected="${s == status}">Abierto</option>
+            </select>
+        </div>
+        <div class="col-6 col-sm-3">
+            <label class="form-label small" for="priority">Prioridad</label>
+            <select class="form-select" id="priority" name="priority">
+                <option value="">Todas</option>
+                <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.label}" th:selected="${p == priority}">Alta</option>
+            </select>
+        </div>
+        <div class="col-sm-2 d-grid">
+            <button class="btn btn-outline-secondary" type="submit">Filtrar</button>
+        </div>
+    </form>
+
+    <p class="text-body-secondary small" th:text="${page.totalElements} + ' tickets'">0 tickets</p>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Título</th>
+                <th scope="col">Área</th>
+                <th scope="col">Prioridad</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Solicitante</th>
+                <th scope="col">Técnico</th>
+                <th scope="col">Creado</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${page.empty}">
+                <td colspan="8" class="text-center text-body-secondary py-4">No hay tickets con estos filtros.</td>
+            </tr>
+            <tr th:each="t : ${page.content}">
+                <td><a th:href="@{/tickets/{id}(id=${t.id})}" th:text="${t.id}">1</a></td>
+                <td><a class="link-body-emphasis text-decoration-none" th:href="@{/tickets/{id}(id=${t.id})}" th:text="${t.title}">Título</a></td>
+                <td class="text-body-secondary small" th:text="${t.category.shortLabel}">IDE</td>
+                <td><span th:replace="~{fragments :: priority(${t.priority})}"></span></td>
+                <td><span th:replace="~{fragments :: status(${t.status})}"></span></td>
+                <td th:text="${t.requester}">Ana</td>
+                <td th:text="${t.assignee} ?: '—'">—</td>
+                <td class="text-nowrap" th:text="${@fmt.dateTime(t.createdAt)}">01/10/2026</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav th:if="${page.totalPages > 1}" aria-label="Paginación">
+        <ul class="pagination pagination-sm">
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/tickets(q=${q},status=${status},priority=${priority},page=${page.number - 1})}">Anterior</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link" th:text="'Página ' + ${page.number + 1} + ' de ' + ${page.totalPages}">Página 1 de 1</span>
+            </li>
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/tickets(q=${q},status=${status},priority=${priority},page=${page.number + 1})}">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+</main>
+
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

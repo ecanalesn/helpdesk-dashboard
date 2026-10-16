@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Nuevo ticket')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('tickets')}"></nav>
+
+<main class="container pb-5" style="max-width: 760px">
+    <h1 class="h3 mb-3">Nuevo ticket</h1>
+
+    <form th:action="@{/tickets}" th:object="${form}" method="post" novalidate>
+        <div class="mb-3">
+            <label class="form-label" for="title">Título</label>
+            <input class="form-control" th:field="*{title}" th:errorclass="is-invalid" maxlength="120" required>
+            <div class="invalid-feedback" th:errors="*{title}">Error</div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+                <label class="form-label" for="requester">Solicitante</label>
+                <input class="form-control" th:field="*{requester}" th:errorclass="is-invalid" maxlength="80" required>
+                <div class="invalid-feedback" th:errors="*{requester}">Error</div>
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label" for="priority">Prioridad</label>
+                <select class="form-select" th:field="*{priority}" th:errorclass="is-invalid">
+                    <option th:each="p : ${priorities}" th:value="${p}"
+                            th:text="${p.label} + ' · resolver en ' + ${@fmt.duration(p.resolutionTarget)}">Media</option>
+                </select>
+                <div class="invalid-feedback" th:errors="*{priority}">Error</div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="category">Área</label>
+            <select class="form-select" th:field="*{category}" th:errorclass="is-invalid">
+                <option value="">Elige un área…</option>
+                <option th:each="c : ${categories}" th:value="${c}" th:text="${c.label}">IDE</option>
+            </select>
+            <div class="invalid-feedback" th:errors="*{category}">Error</div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label" for="description">Descripción</label>
+            <textarea class="form-control" th:field="*{description}" th:errorclass="is-invalid" rows="6" maxlength="2000"
+                      placeholder="Qué ocurre, desde cuándo, mensaje de error, pasos para reproducirlo…"></textarea>
+            <div class="invalid-feedback" th:errors="*{description}">Error</div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Crear ticket</button>
+            <a class="btn btn-outline-secondary" th:href="@{/tickets}">Cancelar</a>
+        </div>
+    </form>
+</main>
+
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

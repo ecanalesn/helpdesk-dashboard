@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('No encontrado')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('')}"></nav>
+<main class="container py-5 text-center">
+    <h1 class="h3">No encontrado</h1>
+    <p class="text-body-secondary">La página o el ticket que buscas no existe.</p>
+    <a class="btn btn-primary" th:href="@{/tickets}">Ir al listado de tickets</a>
+</main>
+</body>
+</html>

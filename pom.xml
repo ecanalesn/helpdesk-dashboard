@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- El parent de Spring Boot aporta un BOM con versiones probadas entre sí
+         (Spring, Hibernate, Jackson, JUnit…) y la configuración de los plugins habituales -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.1</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>io.github.ecanalesn</groupId>
+    <artifactId>helpdesk-dashboard</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Helpdesk Dashboard</name>
+    <description>
+        Gestión de tickets de soporte (prioridad y estado) con panel de indicadores:
+        tiempos de respuesta y de resolución, cumplimiento de SLA e informe mensual.
+    </description>
+    <url>https://github.com/ecanalesn/helpdesk-dashboard</url>
+
+    <!-- ============================================================
+         Versiones en un único sitio. Lo que no aparece aquí lo gestiona
+         el BOM de Spring Boot; para cambiar una de sus versiones basta con
+         redefinir su propiedad (por ejemplo, <h2.version>).
+         ============================================================ -->
+    <properties>
+        <java.version>21</java.version>
+
+        <!-- Frontend empaquetado como dependencias Maven (WebJars) -->
+        <bootstrap.version>5.3.8</bootstrap.version>
+        <chartjs.version>4.5.1</chartjs.version>
+
+        <!-- Plugins que no gestiona Spring Boot -->
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+
+        <!-- Umbrales de calidad -->
+        <jacoco.minimum.line.coverage>0.80</jacoco.minimum.line.coverage>
+        <required.maven.version>3.9.0</required.maven.version>
+
+        <!-- JaCoCo rellena argLine con su agente; vacío por defecto para que
+             @{argLine} funcione también cuando JaCoCo se omite (-Djacoco.skip) -->
+        <argLine/>
+        <!-- Mismo resultado en Windows y Linux; Mockito se carga como agente en JDK 21+ sin avisos -->
+        <test.jvm.flags>-Dfile.encoding=UTF-8 -Duser.language=es -Duser.country=ES -XX:+EnableDynamicAgentLoading -Xshare:off</test.jvm.flags>
+    </properties>
+
+    <dependencies>
+        <!-- Web: MVC + plantillas Thymeleaf + validación de formularios -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Persistencia: JPA (Hibernate) sobre H2 en memoria -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-h2console</artifactId>
+        </dependency>
+
+        <!-- /actuator/health e /actuator/info (versión y fecha de build) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Bootstrap y Chart.js como dependencias Maven: versión fijada, sin CDN ni npm.
+             webjars-locator-lite permite enlazarlos sin la versión en la URL. -->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>bootstrap</artifactId>
+            <version>${bootstrap.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>chart.js</artifactId>
+            <version>${chartjs.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>webjars-locator-lite</artifactId>
+        </dependency>
+
+        <!-- Reinicio automático al recompilar desde el IDE. No entra en el JAR final. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Tests: no entran en el JAR final -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Falla pronto si el JDK o Maven no son los esperados, o si hay conflictos de versiones -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-environment</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[${required.maven.version},)</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>[${java.version},)</version>
+                                </requireJavaVersion>
+                                <dependencyConvergence/>
+                                <banDuplicatePomDependencyVersions/>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Tests unitarios (*Test.java) en la fase "test": rápidos, sin arrancar la aplicación entera -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} ${test.jvm.flags}</argLine>
+                </configuration>
+            </plugin>
+
+            <!-- Tests de integración (*IT.java) en la fase "integration-test"; el goal "verify"
+                 hace fallar la build después, para que no se salte el informe de cobertura -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} ${test.jvm.flags}</argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Cobertura de código: agente durante los tests, informe HTML y umbral mínimo en "verify" -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${jacoco.minimum.line.coverage}</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- JAR ejecutable de Spring Boot (java -jar) + build-info para /actuator/info.
+                 En Spring Boot se usa este plugin en lugar de maven-shade-plugin (ver README). -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Cabecera común: Bootstrap desde el WebJar (sin versión en la URL gracias a webjars-locator-lite) -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · Helpdesk'">Helpdesk</title>
+    <script>
+        // Tema claro/oscuro según el sistema operativo
+        document.documentElement.setAttribute('data-bs-theme',
+            window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    </script>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/dist/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+
+<nav th:fragment="nav(active)" class="navbar navbar-expand-md border-bottom bg-body-tertiary mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-semibold" th:href="@{/}">Helpdesk</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+                aria-controls="nav" aria-expanded="false" aria-label="Menú">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'dashboard'} ? 'active'"
+                       th:attr="aria-current=${active == 'dashboard'} ? 'page'" th:href="@{/}">Panel</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${active == 'tickets'} ? 'active'"
+                       th:attr="aria-current=${active == 'tickets'} ? 'page'" th:href="@{/tickets}">Tickets</a>
+                </li>
+            </ul>
+            <a class="btn btn-primary btn-sm" th:href="@{/tickets/new}">Nuevo ticket</a>
+        </div>
+    </div>
+</nav>
+
+<div th:fragment="flash">
+    <div th:if="${success}" class="alert alert-success" role="status" th:text="${success}">Hecho</div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}">Error</div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/webjars/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+</th:block>
+
+<span th:fragment="priority(p)" class="badge" th:classappend="'text-bg-' + ${p.badge}" th:text="${p.label}">Media</span>
+<span th:fragment="status(s)" class="badge" th:classappend="'text-bg-' + ${s.badge}" th:text="${s.label}">Abierto</span>
+
+</body>
+</html>
